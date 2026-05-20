@@ -1745,20 +1745,10 @@
   document.querySelectorAll('.fade-up').forEach(el => fadeObserver.observe(el));
 
   // ============ WAITLIST FORM ============
+  const WAITLIST_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwLJwaTsSvqoHfa3hhmjyHEAcCOgLULIf87mV_4GfArBcsQSr-ntlsTCOz5YBcnNbMH/exec';
+
   function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
-
-  async function updateCount() {
-    try {
-      const result = await window.storage.list('waitlist:', true);
-      const count = (result?.keys?.length || 0) + 247;
-      const display = document.getElementById('count-display');
-      if (display) display.textContent = count.toLocaleString() + ' on the waitlist';
-    } catch (err) {
-      const display = document.getElementById('count-display');
-      if (display) display.textContent = '247+ on the waitlist';
-    }
   }
 
   const form = document.getElementById('waitlist-form');
@@ -1782,32 +1772,14 @@
     submitBtn.textContent = 'Submitting…';
 
     try {
-      const key = 'waitlist:' + email.replace(/[^a-z0-9@._-]/g, '');
-      try {
-        const existing = await window.storage.get(key, true);
-        if (existing) {
-          message.textContent = "You're already on the list. We'll be in touch when access opens.";
-          message.className = 'form-message success';
-          submitBtn.disabled = false;
-          submitBtn.textContent = originalText;
-          return;
-        }
-      } catch (e) {}
-
-      const result = await window.storage.set(key, JSON.stringify({
-        email,
-        timestamp: new Date().toISOString()
-      }), true);
-
-      if (result) {
-        message.textContent = "You're in. We'll be in touch as soon as private beta access opens.";
-        message.className = 'form-message success';
-        emailInput.value = '';
-        updateCount();
-      } else {
-        message.textContent = 'Something went wrong. Please try again in a moment.';
-        message.className = 'form-message error';
-      }
+      await fetch(WAITLIST_ENDPOINT, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: new URLSearchParams({ email })
+      });
+      message.textContent = "You're in. We'll be in touch as soon as private beta access opens.";
+      message.className = 'form-message success';
+      emailInput.value = '';
     } catch (err) {
       message.textContent = 'Something went wrong. Please try again in a moment.';
       message.className = 'form-message error';
@@ -1816,8 +1788,6 @@
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
   });
-
-  updateCount();
 </script>
 
 </body>
